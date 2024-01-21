@@ -1,0 +1,32 @@
+name: Scrape latest jobs data
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+  - cron: '3,23,43 * * * *'
+
+jobs:
+  scheduled:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out this repo
+      uses: actions/checkout@v3
+    - name: Fetch latest data
+      run: |-
+        curl -G \
+             --data-urlencode 'pipelineRecordsPerPage=100' \
+             --data-urlencode 'listFilterMode=1' \
+             --data-urlencode '1020=[79341]' \
+             --data-urlencode '1020_format=815' \
+             --data-urlencode '1023_format=816' \
+             --data-urlencode '1021=[1248539]' \
+             'https://mycareer.hsbc.com/en_GB/external/SearchJobs/feed/' > itjobs.xml
+    - name: Commit and push if it changed
+      run: |-
+        git config user.name "Automated"
+        git config user.email "actions@users.noreply.github.com"
+        git add -A
+        timestamp=$(date -u)
+        git commit -m "Latest data: ${timestamp}" || exit 0
+        git push
